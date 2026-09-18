@@ -28,14 +28,20 @@ function Auth() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/admin` },
         });
         if (error) throw error;
-        toast.success("Account created. Check your email to confirm, then sign in.");
-        setMode("signin");
+        if (data.session) {
+          toast.success("Account created");
+          navigate({ to: "/admin" });
+        } else {
+          toast.success("Account created. Check your email to confirm, then sign in.");
+          setMode("signin");
+        }
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
