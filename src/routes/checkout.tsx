@@ -105,44 +105,31 @@ function Checkout() {
     setErrors({});
     setSubmitting(true);
 
-    const orderNumber = `VLT-${Date.now().toString(36).toUpperCase().slice(-6)}`;
     const data = parsed.data;
 
     try {
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          order_number: orderNumber,
-          full_name: data.full_name,
-          phone: data.phone,
-          whatsapp: data.whatsapp,
-          email: data.email ? data.email : null,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          notes: data.notes ?? null,
-          total: subtotal,
-          item_count: totalQuantity,
-        })
-        .select("id, order_number")
-        .single();
-
-      if (error || !order) throw error ?? new Error("Order failed");
-
-      const { error: itemsError } = await supabase.from("order_items").insert(
-        items.map((i) => ({
-          order_id: order.id,
+      const { data: orderNumber, error } = await supabase.rpc("place_order", {
+        _full_name: data.full_name,
+        _phone: data.phone,
+        _whatsapp: data.whatsapp,
+        _email: data.email ?? "",
+        _address: data.address,
+        _city: data.city,
+        _state: data.state,
+        _notes: data.notes ?? "",
+        _items: items.map((i) => ({
           product_id: i.productId,
           product_name: i.name,
-          colour: i.colour,
+          colour: i.colour ?? "",
           unit_price: i.price,
           quantity: i.quantity,
         })),
-      );
-      if (itemsError) throw itemsError;
+      });
+
+      if (error || !orderNumber) throw error ?? new Error("Order failed");
 
       saveLastOrder({
-        orderNumber: order.order_number,
+        orderNumber,
         fullName: data.full_name,
         total: subtotal,
         items: items.map((i) => ({
@@ -153,7 +140,8 @@ function Checkout() {
         })),
       });
       clear();
-      navigate({ to: "/order-confirmation/$orderNumber", params: { orderNumber: order.order_number } });
+      navigate({ to: "/order-confirmation/$orderNumber", params: { orderNumber } });
+
     } catch (err) {
       console.error(err);
       toast.error("We couldn't submit your order. Please try again or message us on WhatsApp.");
