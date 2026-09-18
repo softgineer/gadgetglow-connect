@@ -8,6 +8,13 @@
       "when": 1789760511811,
       "tag": "0000_create_gadget_store",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789761093287,
+      "tag": "0001_place_order_rpc",
+      "breakpoints": true
     }
   ]
 }
